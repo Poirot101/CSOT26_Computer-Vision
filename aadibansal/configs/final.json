@@ -1,0 +1,12 @@
+{
+  "track_high_thresh": 0.5,
+  "track_low_thresh": 0.1,
+  "new_track_thresh": 0.6,
+  "match_thresh": 0.8,
+  "second_match_thresh": 0.5,
+  "unconfirmed_match_thresh": 0.7,
+  "track_buffer": 30,
+  "fuse_score": false,
+  "min_box_area": 10.0,
+  "aspect_ratio_thresh": 10.0
+}

@@ -1,0 +1,16 @@
+# Model checkpoints - downloaded on demand by ultralytics
+*.pt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# macOS
+.DS_Store
