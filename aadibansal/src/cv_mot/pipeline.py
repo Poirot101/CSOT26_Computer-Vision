@@ -61,7 +61,7 @@ def run_sequence(
         stats.detections += len(det)
         tracks = tracker.update(det.boxes_tlwh, det.scores, det.features, img_size=img_size)
         for t in tracks:
-            left, top, width, height = t.tlwh
+            left, top, width, height = t.output_tlwh
             records.append([frame_id, t.track_id, left, top, width, height, -1, -1, -1, -1])
         stats.frames = frame_id
         if progress_every and frame_id % progress_every == 0:

@@ -1,7 +1,7 @@
 {
-  "track_high_thresh": 0.5,
+  "track_high_thresh": 0.4,
   "track_low_thresh": 0.1,
-  "new_track_thresh": 0.6,
+  "new_track_thresh": 0.4,
   "match_thresh": 0.8,
   "second_match_thresh": 0.5,
   "unconfirmed_match_thresh": 0.7,

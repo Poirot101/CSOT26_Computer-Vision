@@ -28,7 +28,7 @@ $PY -m cv_mot detect --data "$DATA" --out "$CACHE/yolov8s_1280" \
 echo
 echo "==> 4/6  tune the tracker on the reference sequence (cached dets, ~2 min)"
 $PY -m cv_mot tune --data "$DATA" --seqs ref --dets "$CACHE/yolov8s_1280" \
-    --grid-high 0.3 0.4 0.5 0.6 --grid-new 0.5 0.6 0.7 \
+    --grid-high 0.2 0.3 0.4 0.5 0.6 --grid-new 0.3 0.5 0.7 \
     --json "$OUT/tuning.json"
 
 echo
@@ -39,7 +39,7 @@ $PY -m cv_mot ablate --data "$DATA" --seqs ref --dets "$CACHE/yolov8s_1280" \
 echo
 echo "==> 6/6  final submission + validation"
 $PY -m cv_mot track --data "$DATA" --dets "$CACHE/yolov8s_1280" \
-    --config configs/final.json --interpolate --out "$OUT"
+    --config configs/final.json --interpolate --interpolate-max-gap 20 --out "$OUT"
 $PY -m cv_mot evaluate --data "$DATA" --preds "$OUT" --json "$OUT/final_scores.json"
 $PY scripts/validate_submission.py --data "$DATA" "$OUT"/*.txt
 

@@ -319,13 +319,17 @@ class ByteTracker:
         )
 
         outputs = [t for t in self.tracked_stracks if t.is_activated]
+        for track in outputs:
+            track.out_tlwh = None
         if img_size is not None and outputs:
             width, height = img_size
             clipped = clip_tlwh(np.asarray([t.tlwh for t in outputs]), width, height)
             keep = []
             for track, box in zip(outputs, clipped):
+                # Area is judged on the visible part: a track that has drifted
+                # off-frame contributes nothing but false positives.
                 if box[2] * box[3] >= self.cfg.min_box_area:
-                    track._tlwh = box
+                    track.out_tlwh = box
                     keep.append(track)
             outputs = keep
         return outputs

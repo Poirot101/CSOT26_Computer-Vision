@@ -1,0 +1,23 @@
+Multi-Object Tracking in Dense Crowds
+
+I implemented HOTA and IDF1 locally before building anything, so every decision
+could be measured rather than argued. That mattered: the ground truth is full
+MOTChallenge format, not class-always-1 as documented, and predictions overlapping
+distractor annotations must be deleted rather than counted as false positives.
+
+A ground-truth oracle detector then separated detection error from association
+error. With perfect boxes the tracker scored IDF1 0.985 with zero ID switches;
+changing only the confidence values, boxes identical, cost 24 IDF1 points. So
+confidence handling, not association, dominates here. That justified ByteTrack,
+whose second pass matches low-score boxes to existing tracks without letting them
+create identities, and justified tuning thresholds hard: 0.4 beat the 0.5 default
+because detector recall is the binding constraint.
+
+Measured on the Week 4 sequences: SORT 0.3636, ByteTrack 0.3856, plus gap
+interpolation 0.3939; overall 0.5152. Score fusion helped the oracle but not real
+detections, so I rejected it. Longer track buffers lowered ID switches yet hurt
+IDF1 via wrong revivals.
+
+Detection is the real ceiling: optimal assignment recovers only 56% of ground
+truth, since 39% of scored people are under 10% visible. Next: a pedestrian
+fine-tuned detector, then Re-ID.

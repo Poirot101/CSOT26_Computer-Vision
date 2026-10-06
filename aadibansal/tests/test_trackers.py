@@ -140,14 +140,26 @@ def test_identity_counter_resets_between_sequences():
 
 
 def test_output_boxes_are_clipped_to_the_frame():
+    """A track walking off the edge must still report an in-frame box.
+
+    Asserts a track is actually emitted first -- otherwise an empty output would
+    satisfy the bounds check vacuously, which is how a no-op clip hid here once.
+    """
     tracker = ByteTracker()
+    out = []
     for f in range(1, 8):
+        # Walks right until it straddles the right edge of a 640x480 frame.
         out = tracker.update(
-            np.array([[600.0 + 20 * f, 400.0, 80.0, 80.0]]), np.array([0.95]), img_size=(640, 480)
+            np.array([[480.0 + 10 * f, 300.0, 120.0, 150.0]]), np.array([0.95]), img_size=(640, 480)
         )
-    for t in out:
-        left, top, w, h = t.tlwh
-        assert left >= 0 and top >= 0 and left + w <= 640 + 1e-6 and top + h <= 480 + 1e-6
+    assert len(out) == 1, "expected a live track to clip"
+    left, top, w, h = out[0].output_tlwh
+    assert left >= 0 and top >= 0
+    assert left + w <= 640 + 1e-6 and top + h <= 480 + 1e-6
+    assert w > 0 and h > 0
+    # The unclipped filter state should genuinely exceed the frame, so the
+    # assertions above are testing clipping rather than a box that already fit.
+    assert out[0].tlwh[0] + out[0].tlwh[2] > 640
 
 
 def test_crossing_people_keep_distinct_ids():

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from . import matching
+from .boxes import clip_tlwh
 from .kalman import KalmanFilterXYAH
 from .track import BaseTrack, STrack, TrackState
 
@@ -74,9 +75,21 @@ class SortTracker:
         self.tracks = [
             t for t in self.tracks if self.frame_id - t.end_frame <= cfg.max_age
         ]
-        return [
+        outputs = [
             t
             for t in self.tracks
             if t.state == TrackState.Tracked
             and (t.tracklet_len >= cfg.min_hits or self.frame_id <= cfg.min_hits)
         ]
+        for track in outputs:
+            track.out_tlwh = None
+        if img_size is not None and outputs:
+            width, height = img_size
+            clipped = clip_tlwh(np.asarray([t.tlwh for t in outputs]), width, height)
+            keep = []
+            for track, box in zip(outputs, clipped):
+                if box[2] * box[3] > 0:
+                    track.out_tlwh = box
+                    keep.append(track)
+            outputs = keep
+        return outputs

@@ -64,6 +64,7 @@ class STrack(BaseTrack):
 
     __slots__ = (
         "_tlwh",
+        "out_tlwh",
         "score",
         "cls",
         "kalman_filter",
@@ -91,6 +92,10 @@ class STrack(BaseTrack):
         feature_momentum: float = 0.9,
     ) -> None:
         self._tlwh = np.asarray(tlwh, dtype=np.float64)
+        # Box actually emitted for this frame. Kept separate from the Kalman
+        # state: clipping to the image is an output concern, and writing a
+        # clipped box back into the filter would corrupt the motion model.
+        self.out_tlwh: np.ndarray | None = None
         self.score = float(score)
         self.cls = int(cls)
 
@@ -141,10 +146,18 @@ class STrack(BaseTrack):
     # ----------------------------------------------------------------- geometry
     @property
     def tlwh(self) -> np.ndarray:
-        """Current box as ``(left, top, width, height)``."""
+        """Current box as ``(left, top, width, height)``, from the filter state."""
         if self.mean is None:
             return self._tlwh.copy()
         return xyah_to_tlwh(self.mean[:4])
+
+    @property
+    def output_tlwh(self) -> np.ndarray:
+        """Box to write to the submission file.
+
+        Falls back to the filter's box when no clipped output has been set.
+        """
+        return self.tlwh if self.out_tlwh is None else self.out_tlwh.copy()
 
     @property
     def end_frame(self) -> int:
