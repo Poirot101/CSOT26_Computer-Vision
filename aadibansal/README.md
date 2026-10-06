@@ -142,6 +142,7 @@ The original course material (`Week 1`–`Week 4`, `Final Project`, root
 | [docs/TUNING.md](docs/TUNING.md) | tuning protocol, sweeps, and honest limitations |
 | [docs/LEARNINGS.md](docs/LEARNINGS.md) | findings, the mistakes, and what to try next |
 | [docs/weeks/](docs/weeks/) | one document per course week, tying syllabus to code |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | clean-checkout run: install, 68 tests, scores reproduced exactly |
 
 ---
 
