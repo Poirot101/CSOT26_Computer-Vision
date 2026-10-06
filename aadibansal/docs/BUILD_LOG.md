@@ -40,7 +40,7 @@ copied as-is.
 
 **Authorship decision.** The existing 15 commits are preserved with
 `ishananand06` as their author, which is what copying someone's work honestly
-means. Everything added on top is authored `Poirot101 <aadibansal2007@gmail.com>`.
+means. Everything added on top is authored by the repository owner.
 The original repository was not modified or pushed to at any point.
 
 ---
@@ -297,7 +297,7 @@ better detector.
 
 ```bash
 git config user.name  "Poirot101"
-git config user.email "aadibansal2007@gmail.com"
+git config user.email "<owner's GitHub noreply address>"
 # .gitignore: *.pt, __pycache__, .pytest_cache, .DS_Store, build artefacts
 git add -A && git commit
 git remote add private https://github.com/Poirot101/dense-crowd-mot
