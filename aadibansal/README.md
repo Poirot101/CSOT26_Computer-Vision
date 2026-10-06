@@ -34,18 +34,19 @@ Ablation on `ref`, identical detections throughout:
 | + score fusion | 0.3862 | +0.0006 → **rejected** |
 | + gap interpolation | **0.3939** | **+0.0083** |
 
-68 unit tests pass; all four submission files pass format validation.
+77 tests pass (68 unit + 9 that assert the documentation matches the measured
+results); all four submission files pass format validation.
 
 ---
 
 ## The three measurements that drove every decision
 
 **1. The tracker is not the bottleneck.** Fed perfect boxes from a ground-truth
-oracle, it scores **IDF1 0.985 with zero identity switches**.
+oracle, it scores **IDF1 0.983 with zero identity switches**.
 
 **2. Confidence handling costs 24 IDF1 points on its own.** Keeping the boxes
 perfect and changing *only* the confidence values to realistic ones drops IDF1
-from 0.985 to 0.743. This is what justified ByteTrack and hard threshold tuning.
+from 0.983 to 0.741 — a 24.2-point loss. This is what justified ByteTrack and hard threshold tuning.
 
 **3. Detection is the real ceiling.** Optimal per-frame assignment on the cached
 detections recovers only **56%** of scored ground truth — because 39% of the
@@ -93,6 +94,15 @@ python -m cv_mot tune   --data "../Week 4/data" --seqs ref --dets ../cache/yolov
 python -m cv_mot ablate --data "../Week 4/data" --seqs ref --dets ../cache/yolov8s_1280
 python -m cv_mot ablate --data "../Week 4/data" --seqs ref --oracle   # no inference
 python -m pytest tests -q
+
+# Does the tuned threshold survive being chosen on different sequences?
+python scripts/loso_tuning.py --data "../Week 4/data" --dets ../cache/yolov8s_1280
+
+# Look at the output: annotated video, or just the frames with identity switches
+python scripts/visualize.py --data "../Week 4/data" --seq ref --preds outputs/ref.txt \
+    --gt --max-frames 300 --out /tmp/ref.mp4
+python scripts/visualize.py --data "../Week 4/data" --seq ref --preds outputs/ref.txt \
+    --switches-only --out /tmp/switches.jpg
 ```
 
 To run on the real test sequences, point `--data` at them — no code change is
@@ -120,7 +130,8 @@ aadibansal/
 ├── tests/                68 tests
 ├── docs/                 see below
 ├── notebooks/tracking_pipeline.ipynb
-├── scripts/              reproduce.sh, validate_submission.py
+├── scripts/              reproduce.sh, validate_submission.py,
+│                         loso_tuning.py, visualize.py
 ├── configs/final.json    the tuned configuration
 ├── outputs/              submission files + JSON results
 └── writeup.txt           the 200-word deliverable
@@ -142,7 +153,7 @@ The original course material (`Week 1`–`Week 4`, `Final Project`, root
 | [docs/TUNING.md](docs/TUNING.md) | tuning protocol, sweeps, and honest limitations |
 | [docs/LEARNINGS.md](docs/LEARNINGS.md) | findings, the mistakes, and what to try next |
 | [docs/weeks/](docs/weeks/) | one document per course week, tying syllabus to code |
-| [docs/VERIFICATION.md](docs/VERIFICATION.md) | clean-checkout run: install, 68 tests, scores reproduced exactly |
+| [docs/VERIFICATION.md](docs/VERIFICATION.md) | clean-checkout run: install, tests, scores reproduced exactly |
 
 ---
 
@@ -163,11 +174,15 @@ importing the false positives a globally-lowered threshold would bring.
 ## Honest limitations
 
 - **The real test sequences are not in this repository.** The brief describes four
-  sequences reaching 246 people/frame; only the Week 4 sequences (peak 109/frame)
+  sequences reaching 246 pedestrians/frame; only the Week 4 sequences (peak 52
+  pedestrians/frame, 109 counting all annotations)
   are present. All reported numbers are Week 4 data, and scores on the denser set
   will be lower.
-- **Tuning used `ref` only**, so the `01`/`02`/`03` numbers are *near*-held-out
-  rather than truly held-out. Leave-one-sequence-out would be the correct fix.
+- **Tuning used `ref` only** for most parameters. A leave-one-sequence-out check
+  (`scripts/loso_tuning.py`) shows the main threshold lands on 0.4 regardless of
+  which sequences it is chosen from, with mean regret 0.0074 Score — so the
+  headline choice is not an artefact, though the secondary sweeps still were not
+  cross-validated.
 - **No Re-ID model was evaluated.** The appearance path is implemented and tested
   but unused, because measurement (1) above shows association is not the binding
   constraint on this data.

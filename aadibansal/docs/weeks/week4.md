@@ -6,12 +6,16 @@ This is where the final project's code actually begins.
 
 `Week 4/` (618 MB) — four MOT-format sequences, 2,925 frames total:
 
-| Sequence | Frames | Resolution | Scored GT rows | Peak people/frame | Identities |
-|---|---|---|---|---|---|
-| `01` | 525 | 1920×1080 | 5,257 | 21 | 43 |
-| `02` | 750 | 1920×1080 | 11,450 | 50 | 178 |
-| `03` | 1050 | 1920×1080 | 47,557 | 109 | 141 |
-| `ref` | 600 | 1920×1080 | 17,833 | 56 | 74 |
+| Sequence | Frames | Resolution | Scored GT rows | Peak pedestrians/frame | Peak annotations/frame | Identities |
+|---|---|---|---|---|---|---|
+| `01` | 525 | 1920×1080 | 5,257 | 13 | 21 | 43 |
+| `02` | 750 | 1920×1080 | 11,450 | 32 | 50 | 178 |
+| `03` | 1050 | 1920×1080 | 47,557 | 52 | 109 | 141 |
+| `ref` | 600 | 1920×1080 | 17,833 | 36 | 56 | 74 |
+
+The two peak columns differ because `gt.txt` annotates vehicles and occluders as
+well as people. **Pedestrians/frame is the figure to compare against the final
+project's "246 pedestrians per frame"**; annotations/frame counts every row.
 
 Each folder holds `img/` (individual `.jpg` frames), `seqinfo.ini` (fps,
 resolution, frame count) and `gt.txt`.

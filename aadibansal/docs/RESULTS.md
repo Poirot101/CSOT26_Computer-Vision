@@ -56,15 +56,15 @@ association logic measured in isolation.
 
 | detections fed to the tracker | IDF1 | HOTA | DetA | AssA | IDSW |
 |---|---|---|---|---|---|
-| perfect boxes, **uniform** confidence 0.9 | **0.9853** | 0.9880 | 0.9974 | 0.9787 | **0** |
-| perfect boxes, **realistic** confidence | 0.7425 | 0.7412 | 0.7218 | 0.7612 | 9 |
+| perfect boxes, **uniform** confidence 0.9 | **0.9833** | 0.9817 | 0.9899 | 0.9736 | **0** |
+| perfect boxes, **realistic** confidence | 0.7410 | 0.7358 | 0.7165 | 0.7557 | 9 |
 
 Two conclusions:
 
-1. **The tracker is not the problem.** Given perfect boxes it scores IDF1 0.985
+1. **The tracker is not the problem.** Given perfect boxes it scores IDF1 0.983
    with zero identity switches. The small residual gap is the three-frame
    confirmation delay at track birth.
-2. **Confidence handling costs ~24 IDF1 points on its own.** The boxes are
+2. **Confidence handling costs 24.2 IDF1 points on its own.** The boxes are
    *identical* between those two rows; only the score attached to each one
    changes. Realistic confidence is modelled as `0.15 + 0.80 × visibility`,
    reproducing the real phenomenon that occluded people score low.
@@ -160,10 +160,10 @@ python -m cv_mot ablate --data "../Week 4/data" --seqs ref --oracle
 
 | variant | IDF1 | HOTA | DetA | AssA | IDSW | **Score** |
 |---|---|---|---|---|---|---|
-| SORT baseline | 0.4926 | 0.4415 | 0.4138 | 0.4710 | 45 | 0.4755 |
-| ByteTrack | 0.5158 | 0.4606 | 0.4375 | 0.4849 | 36 | 0.4974 |
-| + score fusion | 0.5396 | 0.4734 | 0.4383 | 0.5113 | 33 | **0.5175** |
-| + gap interpolation | 0.5228 | 0.4678 | 0.4454 | 0.4913 | 36 | 0.5044 |
+| SORT baseline | 0.4919 | 0.4370 | 0.4107 | 0.4649 | 45 | 0.4736 |
+| ByteTrack | 0.5141 | 0.4546 | 0.4334 | 0.4768 | 36 | 0.4943 |
+| + score fusion | 0.5379 | 0.4675 | 0.4342 | 0.5034 | 33 | **0.5144** |
+| + gap interpolation | 0.5211 | 0.4619 | 0.4413 | 0.4833 | 36 | 0.5014 |
 
 ByteTrack beats SORT on **every** metric here, including a drop in identity
 switches from 45 to 36.
@@ -184,22 +184,59 @@ fixed (see [TUNING.md](TUNING.md) for the real-detection sweep):
 
 | `track_high_thresh` | IDF1 | DetA | AssA | **Score** |
 |---|---|---|---|---|
-| 0.60 | 0.7191 | 0.6651 | 0.8123 | 0.7244 |
-| 0.50 | 0.7425 | 0.7218 | 0.7612 | 0.7421 |
-| 0.40 | 0.8354 | 0.7973 | 0.8432 | 0.8302 |
-| 0.30 | 0.8901 | 0.8549 | 0.8724 | 0.8813 |
-| **0.25** | 0.9256 | 0.8918 | 0.9106 | **0.9174** |
-| 0.20 | 0.9172 | 0.9045 | 0.9030 | 0.9127 |
-| 0.16 | 0.9145 | 0.9267 | 0.8950 | 0.9132 |
+| 0.60 | 0.7176 | 0.6603 | 0.8072 | 0.7217 |
+| 0.50 | 0.7410 | 0.7165 | 0.7557 | 0.7393 |
+| 0.40 | 0.8340 | 0.7914 | 0.8378 | 0.8274 |
+| 0.30 | 0.8883 | 0.8483 | 0.8669 | 0.8780 |
+| **0.25** | 0.9236 | 0.8848 | 0.9050 | **0.9140** |
+| 0.20 | 0.9152 | 0.8974 | 0.8973 | 0.9092 |
+| 0.16 | 0.9124 | 0.9195 | 0.8893 | 0.9097 |
 
-**+19.3 Score points** from a single parameter. `DetA` rises monotonically as the
+**+19.2 Score points** from a single parameter. `DetA` rises monotonically as the
 threshold falls, but `AssA` peaks and then declines — past the optimum the extra
 boxes cause mis-associations faster than they add detections. The best score sits
 where those curves cross.
 
 ---
 
-## 6. Runtime
+## 6. Detector choice — evidence for the top recommendation
+
+Section 3 argues detection is the binding constraint. Testing that directly, by
+swapping only the detector and changing nothing else (`ref`, same tracker, same
+`configs/final.json`):
+
+| detector | dets/frame | recall ceiling | DetA | AssA | IDF1 | **Score** |
+|---|---|---|---|---|---|---|
+| `yolov8s @ 1280` | 42.8 | 0.5618 | 0.3035 | 0.3963 | 0.4182 | 0.3937 |
+| `yolov8m @ 1280` | 37.4 | 0.5482 | **0.3231** | 0.3960 | **0.4347** | **0.4084** |
+| delta | −5.4 | **−0.0136** | +0.0196 | −0.0003 | +0.0165 | **+0.0146** |
+
+```bash
+python -m cv_mot detect --data "../Week 4/data" --seqs ref \
+    --out ../cache/yolov8m_1280 --weights yolov8m.pt --imgsz 1280 --conf 0.05
+```
+
+**+0.0146 Score from a detector swap alone** — larger than the interpolation gain
+(+0.0083) and about two thirds of the entire ByteTrack-over-SORT gain (+0.0220).
+`AssA` is unchanged to within 0.0003, which is the point: the detector moved
+detection and left association alone, exactly as the DetA/AssA split predicts.
+
+**The counter-intuitive part is instructive.** `yolov8m` produces *fewer* boxes and
+has a *lower* recall ceiling, yet scores better. The ceiling measures the best
+case at a 0.05 floor; the tracker actually runs at 0.4. The larger model's boxes
+are better calibrated, so more of what survives the operating threshold is
+correct. **Raw recall is not the objective — recall at the threshold you actually
+use is**, and the two can move in opposite directions.
+
+This is measured on `ref` only. Adopting `yolov8m` for the submission means
+re-running detection on all four sequences (~45 min on 4 CPU cores) and
+re-tuning, since the optimal threshold may shift with a better-calibrated
+detector. The gain is real but was not folded into the headline result above,
+which remains `yolov8s @ 1280` throughout.
+
+---
+
+## 7. Runtime
 
 Detector throughput, 4 CPU cores, measured over 8 frames of 1920×1080:
 
@@ -235,13 +272,13 @@ parameter sweep from hours of inference to seconds of association.
 
 ---
 
-## 7. What is not measured here
+## 8. What is not measured here
 
 Stated plainly so the numbers are not over-read:
 
 - **The real test sequences are absent.** The brief describes four test sequences
   reaching 246 people/frame; this repository only contains the Week 4 sequences
-  (peak 109/frame). Everything above is Week 4 data. Scores on the denser test
+  (peak 52 pedestrians/frame). Everything above is Week 4 data. Scores on the denser test
   set will be lower.
 - **Tuning used `ref` only.** `01`, `02` and `03` scores are therefore
   near-honest held-out numbers, but the configuration was selected on `ref`, so
@@ -249,6 +286,8 @@ Stated plainly so the numbers are not over-read:
 - **No Re-ID model was run.** The appearance path is implemented and unit-tested
   but no Re-ID weights were evaluated, because section 2 shows association is not
   the binding constraint on this data.
+- **The detector comparison in section 6 is `ref` only** and is not reflected in
+  the headline scores.
 - **Frame-clipping has almost no score effect** (0.5154 → 0.5152 when enabled) but
   is required for a valid submission. It was enabled after the validator caught
   that the original clipping code was a silent no-op — see

@@ -21,8 +21,14 @@ are needed only for live detection (`.[detect]`).
 
 ```
 $ python -m pytest tests -q
-68 passed
+77 passed
 ```
+
+68 are unit tests of the library; 9 assert that the documentation matches the
+measured results in `outputs/*.json` — see `tests/test_docs_consistency.py`.
+Those were added after a verification pass found the oracle figures in six
+documents had been measured before a bug fix and never re-run. Each was checked
+to fail on a deliberately corrupted document before being kept.
 
 ## 2. Tracking, via the installed console script
 

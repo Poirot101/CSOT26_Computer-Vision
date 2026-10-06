@@ -185,15 +185,54 @@ positives.
 
 ---
 
+## Leave-one-sequence-out check
+
+The threshold was selected on `ref`. Does that choice survive if it is made on
+different data? For each sequence, `track_high_thresh` is chosen by the best mean
+score on the *other three*, then scored on the held-out one.
+
+```bash
+python scripts/loso_tuning.py --data "../Week 4/data" --dets ../cache/yolov8s_1280
+```
+
+Score per (sequence, threshold):
+
+| sequence | 0.2 | 0.3 | 0.4 | 0.5 | 0.6 |
+|---|---|---|---|---|---|
+| `01` | 0.4515 | 0.4675 | **0.5004** | 0.4814 | 0.4864 |
+| `02` | 0.4984 | **0.4989** | 0.4926 | 0.4553 | 0.3810 |
+| `03` | 0.4936 | 0.5618 | 0.5587 | 0.5632 | **0.5821** |
+| `ref` | 0.3710 | 0.3680 | **0.3937** | 0.3799 | 0.3634 |
+
+Folds:
+
+| held out | chosen on the others | held-out score | best possible | regret |
+|---|---|---|---|---|
+| `01` | 0.4 | 0.5004 | 0.5004 | 0.0000 |
+| `02` | 0.4 | 0.4926 | 0.4989 | 0.0063 |
+| `03` | 0.4 | 0.5587 | 0.5821 | 0.0234 |
+| `ref` | 0.4 | 0.3937 | 0.3937 | 0.0000 |
+
+**Every fold selects 0.4**, and mean regret against the hindsight-optimal choice
+is **0.0074 Score**. The threshold is therefore not an artefact of having tuned on
+`ref`.
+
+The per-sequence table also shows why a single global threshold is a compromise:
+`03` would prefer 0.6 (0.5821 vs 0.5587) and `02` slightly prefers 0.3. `03` is
+the sequence with the largest, closest pedestrians, where a stricter threshold
+costs little recall. A per-sequence threshold would gain roughly 0.007 Score
+overall — real but small, and it would not transfer to unseen test sequences,
+which is why it was not adopted.
+
+---
+
 ## Honest limitations of this tuning
 
-- **Single-sequence selection.** The configuration was chosen on `ref` alone, so
-  the `01`/`02`/`03` numbers in [RESULTS.md](RESULTS.md) are *near*-held-out, not
-  truly held-out. `ref` was chosen because it is the hardest sequence (59% of its
-  scored people are under half visible), which should make the configuration
-  conservative rather than over-fitted — but this is an argument, not evidence.
-  A leave-one-sequence-out protocol over all four would be the correct fix and was
-  not run.
+- **Single-sequence selection — now checked.** The configuration was chosen on
+  `ref` alone, which made the `01`/`02`/`03` numbers *near*-held-out rather than
+  truly held-out. A leave-one-sequence-out run (below) shows the choice does not
+  actually depend on which sequence it was tuned on, which removes most of the
+  concern — though the remaining parameters were still swept on `ref` only.
 - **Coordinate-wise, not joint.** After the 2-D grid, remaining parameters were
   swept one at a time from the grid optimum. Interactions between, say,
   `track_buffer` and `track_low_thresh` are unexplored.

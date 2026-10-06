@@ -18,7 +18,7 @@ reasoning is graded as much as the score.
 
 The brief describes four test sequences reaching up to 246 pedestrians per frame.
 **Those sequences are not in this repository** — only the four Week 4 sequences
-(peak 109/frame) are present. Everything reported in
+(peak 52 pedestrians/frame) are present. Everything reported in
 [../RESULTS.md](../RESULTS.md) is therefore measured on Week 4 data, and the
 pipeline is built to run on the test sequences unchanged once they are available:
 
@@ -59,12 +59,16 @@ a 60 px box gives IoU exactly 0.5, so `DetA` must be exactly 10/19 — it is).
 
 ### 2. Measure the problem before choosing a method
 
-| Sequence | % of scored GT less than 50% visible |
-|---|---|
-| `01` | 39.9% |
-| `02` | 22.2% |
-| `03` | 31.1% |
-| `ref` | **59.4%** |
+| Sequence | % of scored GT <50% visible | % <10% visible |
+|---|---|---|
+| `01` | 40.5% | 23.5% |
+| `02` | 30.7% | 5.0% |
+| `03` | 39.2% | 4.8% |
+| `ref` | **59.4%** | **39.5%** |
+
+(Computed over *scored* ground truth only — class 1 with the ignore flag unset.
+Measuring over all `gt.txt` rows instead gives different figures, because the
+distractor and occluder annotations have their own visibility distribution.)
 
 Most of the people being scored are substantially occluded. Any method whose
 association assumes confident, well-separated detections is disqualified before it
@@ -76,8 +80,8 @@ An oracle detector (`cv_mot/detect.py::GroundTruthDetector`) synthesises
 detections of known quality from `gt.txt`. Feeding perfect boxes isolates the
 association logic:
 
-- perfect boxes + uniform confidence → **IDF1 0.9853, 0 ID switches**
-- perfect boxes + realistic confidence → **IDF1 0.7425**
+- perfect boxes + uniform confidence → **IDF1 0.9833, 0 ID switches**
+- perfect boxes + realistic confidence → **IDF1 0.7410**
 
 The first result proves the tracker is not broken. The second quantifies the
 actual problem: **confidence handling, not box quality, dominates on this data.**
@@ -87,7 +91,7 @@ That is what directed the effort to ByteTrack and to threshold tuning.
 
 The brief hints the optimal threshold is lower than default. Measured on the
 oracle, dropping `track_high_thresh` from 0.60 to 0.25 moves the score from
-**0.7244 → 0.9174**. Past that point `DetA` keeps rising while `AssA` falls — the
+**0.7217 → 0.9140**. Past that point `DetA` keeps rising while `AssA` falls — the
 extra boxes start causing mis-associations faster than they add detections. The
 optimum sits where those curves cross. See [../TUNING.md](../TUNING.md).
 

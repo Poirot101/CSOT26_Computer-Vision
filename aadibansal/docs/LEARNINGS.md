@@ -48,15 +48,15 @@ of known quality so detector error can be dialled to zero.
 
 | detections | IDF1 | IDSW |
 |---|---|---|
-| perfect boxes, uniform confidence | **0.9853** | **0** |
-| perfect boxes, realistic confidence | 0.7425 | 9 |
+| perfect boxes, uniform confidence | **0.9833** | **0** |
+| perfect boxes, realistic confidence | 0.7410 | 9 |
 
 The boxes are *identical* between those rows. Only the confidence attached to each
-changes, and that alone costs ~24 IDF1 points.
+changes, and that alone costs 24.2 IDF1 points.
 
 Two things follow immediately:
 
-1. The tracker is not broken — 0.985 with zero switches says the Kalman model and
+1. The tracker is not broken — 0.983 with zero switches says the Kalman model and
    the association logic are sound. Any remaining error is elsewhere.
 2. **Confidence handling, not box quality or association cleverness, is the
    dominant lever on this data.**
@@ -195,14 +195,26 @@ Knowing *when not to train* mattered more here than any architectural knowledge.
    constraint by a wide margin: the ceiling is 56% recall and we achieve DetA 0.44.
    Fine-tuning YOLOv8 on crowded pedestrian data, or using a detector trained for
    MOT (the ByteTrack authors' YOLOX-X), is worth more than every tracker change
-   combined. Nothing else on this list competes.
-2. **Higher inference resolution and a larger backbone.** `yolov8s @ 1280` was
-   chosen for CPU budget. `yolov8m`/`yolov8l` at 1536 should raise recall on small
-   distant pedestrians directly — measurable immediately with the existing
-   `detect` → `tune` flow.
-3. **Leave-one-sequence-out tuning.** The configuration was selected on `ref`
-   alone. With four annotated sequences available this is cheap and would turn
-   "near-held-out" numbers into honest ones.
+   combined. Nothing else on this list competes — and the `yolov8m` result in (2)
+   is direct evidence that this axis pays, since a merely *larger generic* detector
+   already beats every tracker-side change except ByteTrack itself.
+2. **A larger backbone — now measured, and it works.** Swapping `yolov8s` for
+   `yolov8m` at the same resolution, changing nothing else, gains **+0.0146 Score**
+   on `ref` (DetA +0.0196, AssA unchanged). That is two thirds of the entire
+   ByteTrack-over-SORT gain, from one flag. See [RESULTS.md](RESULTS.md) §6.
+   Adopting it for the submission needs detection re-run on all four sequences
+   (~45 min on CPU) and a re-tune. `yolov8l`/`yolov8x` at 1536 is the next step.
+
+   The surprise: `yolov8m` has a *lower* raw recall ceiling yet scores better,
+   because its boxes are better calibrated and more of them survive the operating
+   threshold. **Recall at the threshold you actually use is the objective, not raw
+   recall** — a distinction I would have missed without measuring both.
+3. ~~**Leave-one-sequence-out tuning.**~~ **Done** — `scripts/loso_tuning.py`.
+   Every fold independently selects `track_high_thresh = 0.4`, with mean regret
+   0.0074 Score against the hindsight-optimal per-sequence choice, so the headline
+   threshold is not an artefact of tuning on `ref`. The secondary sweeps
+   (`track_low_thresh`, `track_buffer`, interpolation gap) are still
+   single-sequence and remain worth cross-validating.
 4. **Re-ID appearance features.** Implemented but unevaluated. Expected to help
    less than (1)–(3) here *because* of the oracle result — but it is the right fix
    for the residual failure mode once detection improves, since the 9 ID switches

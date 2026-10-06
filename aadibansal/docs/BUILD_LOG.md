@@ -167,7 +167,8 @@ global solve. Verified optimal/empty/all-rejected cases.
 
 **`bytetrack.py` / `sort.py`** — the method and its baseline. Verified on a
 synthetic case where one person's confidence collapses for seven frames:
-ByteTrack keeps both identities through the dip; SORT loses 6 frames of detections.
+ByteTrack keeps both identities through the dip and reports 60 boxes; SORT reports
+53, losing 7 to the dip.
 
 **`metrics/`** — written *before* any tuning, for the reason argued in
 [METRICS.md](METRICS.md). First sanity check:
@@ -267,15 +268,15 @@ Both planted errors caught.
 **Oracle ceiling.** Feed the tracker perfect boxes:
 
 ```
-perfect boxes + uniform confidence : IDF1=0.9853 HOTA=0.9880 IDSW=0
-perfect boxes + realistic confidence: IDF1=0.7425 HOTA=0.7412 IDSW=9
+perfect boxes + uniform confidence : IDF1=0.9833 HOTA=0.9817 IDSW=0
+perfect boxes + realistic confidence: IDF1=0.7410 HOTA=0.7358 IDSW=9
 ```
 
-The tracker is sound; **confidence handling alone costs ~24 IDF1 points.** This
+The tracker is sound; **confidence handling alone costs 24.2 IDF1 points.** This
 redirected the remaining effort from association cleverness to thresholds.
 
-**Threshold sweep on the oracle.** Score from 0.7244 at `high=0.6` to **0.9174**
-at `high=0.25` — +19.3 points from one parameter, with `DetA` rising and `AssA`
+**Threshold sweep on the oracle.** Score from 0.7217 at `high=0.6` to **0.9140**
+at `high=0.25` — +19.2 points from one parameter, with `DetA` rising and `AssA`
 turning over at the optimum.
 
 **Detector recall ceiling.** Optimal per-frame assignment at IoU ≥ 0.5 — the best
@@ -405,6 +406,59 @@ Documentation written: [METRICS.md](METRICS.md), [RESULTS.md](RESULTS.md),
 plus the notebook and the ≤200-word `writeup.txt`.
 
 ---
+
+## Phase 14 — Verification pass, and six defects it found
+
+A second verification pass re-derived every number in the documentation rather
+than trusting it. It found six real problems:
+
+1. **Stale oracle figures.** The oracle experiments were measured *before* the
+   frame-clipping fix in Phase 12 and never re-run. Six documents quoted
+   IDF1 0.9853 where the code now produces 0.9833, and a sweep peak of 0.9174
+   where it produces 0.9140. Regenerated and corrected everywhere; the
+   conclusions were unaffected.
+2. **The notebook could not execute.** Its paths were relative to `aadibansal/`,
+   but a notebook runs with its *own* directory as the working directory, so
+   `../Week 4/data` resolved to nothing. It now locates the project root by
+   walking up to `pyproject.toml`, and executes end to end under `nbconvert`.
+3. **The notebook's final cell contradicted the documented result.** It hardcoded
+   `track_high_thresh=0.5` instead of loading `configs/final.json`, producing
+   Score 0.3668 where RESULTS.md reports 0.3937. It now loads the config and
+   asserts the match.
+4. **Mixed units in the occlusion table.** `01`/`02`/`03` quoted
+   percentages computed over *all* `gt.txt` rows while `ref` used *scored* rows,
+   under a heading claiming all four were scored rows. Corrected to 40.5 / 30.7 /
+   39.2 / 59.4.
+5. **Mixed units in "peak people/frame".** 21 / 50 / 109 / 56 count every
+   annotation including vehicles and occluders. Against the brief's "246
+   pedestrians per frame" the right figures are 13 / 32 / 52 / 36. Both columns
+   are now shown and labelled.
+6. **"SORT loses 6 frames"** — the reproducible figure from the test and notebook
+   is 7.
+
+**The guard added in response:** `tests/test_docs_consistency.py` asserts that
+every metric row in `outputs/*.json` appears verbatim in the docs quoting it,
+that relative links resolve, that `writeup.txt` is within its limit, that the
+submission files match their documented counts, and that `configs/final.json`
+matches the table in TUNING.md.
+
+Its first version had the *same* vacuous-pass flaw as the clipping test in Phase
+12: a row written `| **OVERALL** | ... |` did not match the label regex, so the
+check silently skipped rather than failed. Found by deliberately corrupting a
+number and watching the test pass. Every check was then verified to fail on a
+corrupted document before being kept.
+
+## Phase 15 — Improvements measured, not asserted
+
+- **Leave-one-sequence-out tuning** (`scripts/loso_tuning.py`): every fold
+  independently selects `track_high_thresh = 0.4`, mean regret 0.0074 Score.
+  Resolves the single-sequence selection caveat.
+- **Detector comparison**: `yolov8m` over `yolov8s` gains +0.0146 Score with
+  `AssA` unchanged — and does so with a *lower* raw recall ceiling, because its
+  boxes survive the operating threshold better.
+- **Visualisation** (`scripts/visualize.py`): annotated video, or a contact sheet
+  of just the frames containing an identity switch, which is what the Week 4
+  brief's "watch your output video" step actually needs.
 
 ## Summary of order, and why it mattered
 

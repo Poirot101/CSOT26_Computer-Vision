@@ -6,7 +6,7 @@ MOTChallenge format, not class-always-1 as documented, and predictions overlappi
 distractor annotations must be deleted rather than counted as false positives.
 
 A ground-truth oracle detector then separated detection error from association
-error. With perfect boxes the tracker scored IDF1 0.985 with zero ID switches;
+error. With perfect boxes the tracker scored IDF1 0.983 with zero ID switches;
 changing only the confidence values, boxes identical, cost 24 IDF1 points. So
 confidence handling, not association, dominates here. That justified ByteTrack,
 whose second pass matches low-score boxes to existing tracks without letting them

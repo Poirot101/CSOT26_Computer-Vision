@@ -217,7 +217,7 @@ is the easiest way to accidentally neutralise the whole approach.
 Tracking error has two independent sources — the detector missing people, and the
 association assigning them wrongly. Perfect detections isolate the second. This
 produced the project's most useful single measurement: with perfect boxes the
-tracker scores IDF1 0.985 with zero ID switches, so remaining error is not a
+tracker scores IDF1 0.983 with zero ID switches, so remaining error is not a
 tracker bug (see [RESULTS.md](RESULTS.md)).
 
 `CachedDetections` is what makes tuning affordable: detection is 0.43 s/frame,

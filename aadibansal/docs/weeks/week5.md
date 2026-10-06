@@ -77,11 +77,11 @@ feeds the tracker **perfect boxes** and varies only the confidence values:
 
 | detections | IDF1 | ID switches |
 |---|---|---|
-| perfect boxes, uniform high confidence | 0.9853 | 0 |
-| perfect boxes, realistic confidence | 0.7425 | 9 |
+| perfect boxes, uniform high confidence | 0.9833 | 0 |
+| perfect boxes, realistic confidence | 0.7410 | 9 |
 
-With perfect boxes the tracker scores 0.985 with **zero** switches — so failure 2
-is not what is costing points here. Changing only the confidence values costs ~24
+With perfect boxes the tracker scores 0.983 with **zero** switches — so failure 2
+is not what is costing points here. Changing only the confidence values costs 24.2
 IDF1 points. Failure 1 dominates on this data by a wide margin, so the effort went
 to ByteTrack, and appearance remained optional.
 
