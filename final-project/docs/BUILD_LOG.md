@@ -234,13 +234,14 @@ After the fixes: **68 passed.**
 
 ---
 
-## Phase 7 — Restructuring into `aadibansal/`
+## Phase 7 — Restructuring into a project directory
 
-On request, all new work moved under `aadibansal/` so the original course material
+On request, all new work moved under its own directory (`final-project/`) so the
+original course material
 stays untouched at the repository root:
 
 ```
-aadibansal/{src,tests,scripts,notebooks,docs,outputs,configs}
+final-project/{src,tests,scripts,notebooks,docs,outputs,configs}
 ```
 
 Tests re-run from the new location: 68 passed.
@@ -417,7 +418,7 @@ than trusting it. It found six real problems:
    IDF1 0.9853 where the code now produces 0.9833, and a sweep peak of 0.9174
    where it produces 0.9140. Regenerated and corrected everywhere; the
    conclusions were unaffected.
-2. **The notebook could not execute.** Its paths were relative to `aadibansal/`,
+2. **The notebook could not execute.** Its paths were relative to `final-project/`,
    but a notebook runs with its *own* directory as the working directory, so
    `../Week 4/data` resolved to nothing. It now locates the project root by
    walking up to `pyproject.toml`, and executes end to end under `nbconvert`.

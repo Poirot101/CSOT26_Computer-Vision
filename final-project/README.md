@@ -113,7 +113,7 @@ needed, and `01.txt`…`04.txt` are produced from whatever sequence folders exis
 ## Repository map
 
 ```
-aadibansal/
+final-project/
 ├── src/cv_mot/
 │   ├── boxes.py          tlwh / xyxy / xyah conversions, vectorised IoU + GIoU
 │   ├── kalman.py         constant-velocity filter, noise scaled by box height

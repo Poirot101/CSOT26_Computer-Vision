@@ -6,7 +6,7 @@ built in.
 
 ```bash
 git clone --depth 1 https://github.com/Poirot101/dense-crowd-mot /home/user/dense-crowd-mot
-cd /home/user/dense-crowd-mot/aadibansal
+cd /home/user/dense-crowd-mot/final-project
 pip install -e .
 ```
 
